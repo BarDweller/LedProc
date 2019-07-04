@@ -10,16 +10,17 @@ The Teensy + OctoWS2811 breakout together work really well to drive the LED pixe
 The teensy sketch will collect commands from serial, and run them immediately. And it will allow storing of commands to banks, which can be executed as required. Immediate commands will run when received, even if a bank is executing, allowing modification of parameters for the running bank.
 
 ## Protocol
+*Note* Banks & VLed stuff not finished.. TODO ;)
 ```
 (VLED mapping, n must be const.)
-VLn - enable/disable vled mappings
+Vn - enable/disable vled mappings
  eg.
-  VL0 //disable vled mappings
-  VL1 //enable
+  V0 //disable vled mappings
+  V1 //enable
 (n,x must be constants, less than led max)
-MVn:x - map from vled # to real led #
+Pn:x - map from vled # to real led #
  eg.
-  MV1:2M2:4M3:6 //map 1->2 2->4 3->6
+  P1:P2:4P3:6 //map 1->2 2->4 3->6
 
 (LED commands n/rgb can be const or !indirect as per regs)
 Ln:R,G,B - make led N be RGB
