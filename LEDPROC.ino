@@ -39,10 +39,10 @@ Command *banks[MAX_BANK];
 boolean vledEnabled=false;
 short ledMap[MAX_LED];
 
-void VL_CMD(Arg args[]) {
+void V_CMD(Arg args[]) {
   vledEnabled = args[0].val > 0;
 }
-void MV_CMD(Arg args[]) {
+void P_CMD(Arg args[]) {
   ledMap[args[0].val] = args[1].val;
 }
 void L_CMD(Arg args[]) {
@@ -365,7 +365,8 @@ Command *parse(char *input, int maxlen){
         Serial.print(commandIndex);
         Serial.println(" is W_CMD");
         cmds[commandIndex].cmd = W_CMD;
-        inputIndex=readArg(input,inputIndex,maxlen,&(cmds[commandIndex].args[0]));        
+        inputIndex=readArg(input,inputIndex,maxlen,&(cmds[commandIndex].args[0]));
+        commandIndex++;
         break;
       }
       case 'U':{ //UPDATE
@@ -374,9 +375,32 @@ Command *parse(char *input, int maxlen){
         Serial.print(commandIndex);
         Serial.println(" is U_CMD");
         cmds[commandIndex].cmd = U_CMD;  
-        inputIndex=readArg(input,inputIndex,maxlen,&(cmds[commandIndex].args[0]));       
+        inputIndex=readArg(input,inputIndex,maxlen,&(cmds[commandIndex].args[0]));  
+        commandIndex++;
         break;
       }
+      case 'V':{ //VLED_ENABLE
+        inputIndex+=1;
+        Serial.print("Command ");
+        Serial.print(commandIndex);
+        Serial.println(" is V_CMD");
+        cmds[commandIndex].cmd = V_CMD;  
+        inputIndex=readArg(input,inputIndex,maxlen,&(cmds[commandIndex].args[0]));      
+        commandIndex++;
+        break;
+      }
+      case 'P':{ //LED MAPPING
+        inputIndex+=1;
+        Serial.print("Command ");
+        Serial.print(commandIndex);
+        Serial.println(" is P_CMD");
+        cmds[commandIndex].cmd = P_CMD;  
+        inputIndex=readArg(input,inputIndex,maxlen,&(cmds[commandIndex].args[0]));       
+        inputIndex+=1;
+        inputIndex=readArg(input,inputIndex,maxlen,&(cmds[commandIndex].args[1]));
+        commandIndex++;
+        break;
+      }        
       case 'R':{ //REG
         inputIndex+=1;
         Serial.print("Command ");
@@ -448,11 +472,10 @@ Command *parse(char *input, int maxlen){
         break;
       }
       case 'B':{ //BANK
+        Serial.println("Bank not implemented yet, this will not end well.");
         break;
       }      
       case 'J':{ //JUMP
-        Serial.print("Jidx ");
-        Serial.println(inputIndex);
         inputIndex+=1;
         Serial.print("Command ");
         Serial.print(commandIndex);
@@ -526,8 +549,6 @@ Command *parse(char *input, int maxlen){
               inputIndex=readArg(input,inputIndex,maxlen,&(cmds[commandIndex].args[1]));
               dumpArg(cmds[commandIndex].args[2]);
               commandIndex++; 
-              Serial.print(inputIndex);
-              Serial.println("End");                      
               break;
             }                        
           }
@@ -539,7 +560,6 @@ Command *parse(char *input, int maxlen){
           Serial.print(cmds[commandIndex].args[0].val);
           Serial.print(" is at ");
           Serial.println(commandIndex);
-          
           commandIndex++;        
         }        
         break;
@@ -635,6 +655,7 @@ void setup() {
   //Serial.println("-enter main loop, sleeping");
 }
 
+//util fn, dump string as 2byte hex..
 void h(char *arg){
   for(int i=0;i<strlen(arg);i++){
     if(arg[i]<0x10){
@@ -644,6 +665,7 @@ void h(char *arg){
   }
 }
 
+//find offset of lf in buffer.. -1 if not found
 int findLF(char* buffer){
   if(buffer!=NULL){
     for(int i=0;i<strlen(buffer);i++){
@@ -654,10 +676,11 @@ int findLF(char* buffer){
   }
   return -1;  
 }
+
+//offset within inputbuffer.
 int offset=0;
 
 void loop() {
-
   //collect data from ser port
   int serdatacount=Serial.available();
   char *readptr=NULL;
@@ -684,6 +707,7 @@ void loop() {
   if(readBuffer!=NULL){
     len=strlen(readBuffer);
   }
+  
   //if we have unprocessed data.. 
   if(len>offset){
     int lf=findLF(&readBuffer[offset]);
